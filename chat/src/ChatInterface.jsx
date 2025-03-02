@@ -60,7 +60,7 @@ const ChatInterface = () => {
           </div>
         ))}
         {isLoading && (
-          <div className="message ai loading">DeepSeek is thinking...</div>
+          <div className="message ai loading">RAG is thinking...</div>
         )}
         <div ref={messagesEndRef} />
       </div>
