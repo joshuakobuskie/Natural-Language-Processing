@@ -5,7 +5,7 @@ import './ChatInterface.css';
 function App() {
   return (
     <div className="App">
-      <h1>DeepSeek Chat</h1>
+      <h1>RAG System Chat</h1>
       <ChatInterface />
     </div>
   );
