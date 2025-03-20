@@ -51,15 +51,12 @@ const ChatInterface = () => {
         body: JSON.stringify({ prompt: input }),
       });
 
-      // Display if the API call fails
-      if (!response.ok) throw new Error('RAG Chat was unable to connect to the server. Please try again later');
-      
       // Display the AI response
       const data = await response.json();
       setMessages(prev => [...prev, { text: data.response, isUser: false }]);
 
     } catch (error) {
-      setMessages(prev => [...prev, { text: 'Error: Could not generate a response', isUser: false }]);
+      setMessages(prev => [...prev, { text: 'RAG Chat was unable to connect to the server. Please try again later', isUser: false }]);
     } finally {
       setIsLoading(false);
     }
