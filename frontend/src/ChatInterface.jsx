@@ -4,10 +4,26 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [dots, setDots] = useState('');
   const messagesEndRef = useRef(null);
 
+  // Dot animation effect
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setDots(prev => {
+          if (prev.length >= 3) return '';
+          return prev + '.';
+        });
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  // Scrolls to the bottom of the messages
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -15,16 +31,18 @@ const ChatInterface = () => {
   }, [messages]);
 
   const handleSubmit = async (e) => {
+
+    // Prevents the submission of empty messages
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Add user message
+    // Add user message and show loading sequence
     setMessages(prev => [...prev, { text: input, isUser: true }]);
     setInput('');
     setIsLoading(true);
 
     try {
-      // Call backend API
+      // Calls backend API
       const response = await fetch('http://localhost:5001/api/generate', {
         method: 'POST',
         headers: {
@@ -33,15 +51,15 @@ const ChatInterface = () => {
         body: JSON.stringify({ prompt: input }),
       });
 
-      if (!response.ok) throw new Error('API call failed');
+      // Display if the API call fails
+      if (!response.ok) throw new Error('RAG Chat was unable to connect to the server. Please try again later');
       
+      // Display the AI response
       const data = await response.json();
       setMessages(prev => [...prev, { text: data.response, isUser: false }]);
+
     } catch (error) {
-      setMessages(prev => [...prev, { 
-        text: 'Error: Could not get response from AI', 
-        isUser: false 
-      }]);
+      setMessages(prev => [...prev, { text: 'Error: Could not generate a response', isUser: false }]);
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +78,7 @@ const ChatInterface = () => {
           </div>
         ))}
         {isLoading && (
-          <div className="message ai loading">RAG is thinking...</div>
+          <div className="message ai loading">RAG Chat is thinking{dots}</div>
         )}
         <div ref={messagesEndRef} />
       </div>
