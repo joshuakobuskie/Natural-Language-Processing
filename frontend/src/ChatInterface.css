@@ -1,8 +1,7 @@
-.chat-container {
+ .chat-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    max-width: 800px;
     margin: 0 auto;
     padding: 20px;
     background-color: #f0f0f0;
@@ -15,13 +14,14 @@
     background-color: white;
     border-radius: 10px;
     margin-bottom: 20px;
+    min-height: 0;
   }
-  
+
   .message {
     margin: 10px 0;
     padding: 10px 15px;
     border-radius: 15px;
-    max-width: 70%;
+    max-width: 80%;
     word-wrap: break-word;
   }
   
@@ -29,11 +29,13 @@
     background-color: #007bff;
     color: white;
     margin-left: auto;
+    width: fit-content;
   }
   
   .message.ai {
     background-color: #e9ecef;
     margin-right: auto;
+    width: fit-content;
   }
   
   .message.loading {
@@ -61,6 +63,7 @@
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 16px;
   }
   
   .input-form button:disabled {

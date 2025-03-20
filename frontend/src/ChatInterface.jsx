@@ -50,6 +50,7 @@ const ChatInterface = () => {
 
   return (
     <div className="chat-container">
+      <h1>RAG Chat System</h1>
       <div className="messages-container">
         {messages.map((msg, index) => (
           <div 
