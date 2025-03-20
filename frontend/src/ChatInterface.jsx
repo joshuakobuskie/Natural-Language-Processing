@@ -1,4 +1,3 @@
-// src/ChatInterface.jsx
 import React, { useState, useRef, useEffect } from 'react';
 
 const ChatInterface = () => {
