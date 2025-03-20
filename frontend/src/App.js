@@ -5,7 +5,6 @@ import './ChatInterface.css';
 function App() {
   return (
     <div className="App">
-      <h1>RAG System Chat</h1>
       <ChatInterface />
     </div>
   );
