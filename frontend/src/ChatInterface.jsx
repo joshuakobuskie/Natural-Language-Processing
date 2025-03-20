@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown'
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
@@ -71,7 +72,7 @@ const ChatInterface = () => {
             key={index}
             className={`message ${msg.isUser ? 'user' : 'ai'}`}
           >
-            {msg.text}
+            <ReactMarkdown components={{p: ({ children }) => <>{children}</>,}}>{msg.text}</ReactMarkdown>
           </div>
         ))}
         {isLoading && (
