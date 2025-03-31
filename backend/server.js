@@ -13,7 +13,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
 
   var dataToSend = "";
-  const process = spawn("python3",["./temp.py", req.query.prompt, req.query.rag, req.query.history] ); 
+  const process = spawn("python3", ["./temp.py", req.query.prompt, req.query.rag, req.query.history] ); 
 
   process.stdout.on("data", (data) => {
     dataToSend = data.toString();
