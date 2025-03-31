@@ -50,12 +50,15 @@
     align-items: center;
   }
   
-  .input-form input {
+  .input-form textarea {
     flex: 1;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 16px;
+    resize: none;
+    overflow-y: auto;
+    width: 100%;
   }
   
   .input-form button {
@@ -66,6 +69,7 @@
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
+    margin: auto;
   }
   
   .input-form button:disabled {
@@ -97,4 +101,10 @@
 
   .switch-row span {
     height: 24px;
+  }
+
+  .button-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
   }
