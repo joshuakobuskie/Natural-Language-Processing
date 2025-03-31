@@ -45,7 +45,6 @@ const ChatInterface = () => {
   const handleSubmit = async (e) => {
 
     // Prevents the submission of empty messages
-    console.log(e);
     if (e !== undefined) {
       e.preventDefault();
     }
