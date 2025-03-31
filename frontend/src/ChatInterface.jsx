@@ -1,12 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import Switch from "react-switch";
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dots, setDots] = useState('');
+  const [useRag, setUseRag] = useState(false);
+  const [useHistory, setUseHistory] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const handleRagChange = checked => {
+    setUseRag(checked);
+  };
+
+  const handleHistoryChange = checked => {
+    setUseHistory(checked);
+  };
 
   // Dot animation effect
   useEffect(() => {
@@ -49,7 +60,7 @@ const ChatInterface = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: input }),
+        body: JSON.stringify({ prompt: input, rag: useRag, history: useHistory ? messages : [] }),
       });
 
       // Display the AI response
@@ -89,6 +100,19 @@ const ChatInterface = () => {
           placeholder="Ask me anything..."
           disabled={isLoading}
         />
+
+        <div className="switch-container">
+          <div className="switch-row">
+            <span>RAG:</span>
+            <Switch onChange={handleRagChange} checked={useRag} className="react-switch" />
+          </div>
+
+          <div className="switch-row">
+            <span>History:</span>
+            <Switch onChange={handleHistoryChange} checked={useHistory} className="react-switch" />
+          </div>
+        </div>
+
         <button type="submit" disabled={isLoading}>
           Send
         </button>

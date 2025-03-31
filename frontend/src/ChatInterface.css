@@ -47,6 +47,7 @@
   .input-form {
     display: flex;
     gap: 10px;
+    align-items: center;
   }
   
   .input-form input {
@@ -80,4 +81,20 @@
     font-weight: bold;
     text-align: left;
     margin: -20px -20px 20px -20px;
+  }
+
+  .switch-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .switch-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .switch-row span {
+    height: 24px;
   }
