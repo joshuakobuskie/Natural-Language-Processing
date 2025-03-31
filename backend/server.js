@@ -10,10 +10,10 @@ const port = 5001;
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
+app.post("/api/generate", async (req, res) => {
 
   var dataToSend = "";
-  const process = spawn("python3", ["./temp.py", req.query.prompt, req.query.rag, req.query.history] ); 
+  const process = spawn("python3", ["./temp.py", req.body.prompt, JSON.stringify(req.body.rag), JSON.stringify(req.body.history)] ); 
 
   process.stdout.on("data", (data) => {
     dataToSend = data.toString();
@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
     if (!dataToSend) {
       res.status(500).send("Server Connection Error");
     } else {
-      res.send(dataToSend);
+      res.json({ response: dataToSend });
     }
   });
 
