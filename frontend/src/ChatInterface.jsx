@@ -93,29 +93,30 @@ const ChatInterface = () => {
       </div>
       
       <form onSubmit={handleSubmit} className="input-form">
-        <input
-          type="text"
+        <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask me anything..."
           disabled={isLoading}
+          rows = {2}
         />
+        <div className="button-container">
+          <div className="switch-container">
+            <div className="switch-row">
+              <span>RAG:</span>
+              <Switch onChange={handleRagChange} checked={useRag} className="react-switch" />
+            </div>
 
-        <div className="switch-container">
-          <div className="switch-row">
-            <span>RAG:</span>
-            <Switch onChange={handleRagChange} checked={useRag} className="react-switch" />
+            <div className="switch-row">
+              <span>History:</span>
+              <Switch onChange={handleHistoryChange} checked={useHistory} className="react-switch" />
+            </div>
           </div>
 
-          <div className="switch-row">
-            <span>History:</span>
-            <Switch onChange={handleHistoryChange} checked={useHistory} className="react-switch" />
-          </div>
+          <button type="submit" disabled={isLoading}>
+            Send
+          </button>
         </div>
-
-        <button type="submit" disabled={isLoading}>
-          Send
-        </button>
       </form>
     </div>
   );
