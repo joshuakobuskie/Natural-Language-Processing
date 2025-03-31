@@ -45,7 +45,7 @@ const ChatInterface = () => {
   const handleSubmit = async (e) => {
 
     // Prevents the submission of empty messages
-    e.preventDefault();
+    // e.preventDefault();
     if (!input.trim()) return;
 
     // Add user message and show loading sequence
@@ -99,6 +99,12 @@ const ChatInterface = () => {
           placeholder="Ask me anything..."
           disabled={isLoading}
           rows = {2}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
         />
         <div className="button-container">
           <div className="switch-container">
