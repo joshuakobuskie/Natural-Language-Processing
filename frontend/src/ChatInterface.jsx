@@ -45,7 +45,11 @@ const ChatInterface = () => {
   const handleSubmit = async (e) => {
 
     // Prevents the submission of empty messages
-    // e.preventDefault();
+    console.log(e);
+    if (e !== undefined) {
+      e.preventDefault();
+    }
+
     if (!input.trim()) return;
 
     // Add user message and show loading sequence
@@ -101,7 +105,7 @@ const ChatInterface = () => {
           rows = {2}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
+              // e.preventDefault();
               handleSubmit();
             }
           }}
