@@ -59,6 +59,8 @@
     resize: none;
     overflow-y: auto;
     width: 100%;
+    font-family: inherit;
+    font-size: inherit;
   }
   
   .input-form button {
