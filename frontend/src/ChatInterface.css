@@ -1,9 +1,9 @@
  .chat-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh;
     margin: 0 auto;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     background-color: #f0f0f0;
     box-sizing: border-box;
   }
@@ -86,7 +86,7 @@
     font-size: 24px;
     font-weight: bold;
     text-align: left;
-    margin: -20px -20px 20px -20px;
+    margin: 0px -20px 20px -20px;
   }
 
   .switch-container {
