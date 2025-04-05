@@ -39,7 +39,7 @@ app.post("/api/generate", async (req, res) => {
 
 // Start server
 app.listen(port, () => {
-  console.log(`Node.js server running on http://http://192.168.1.163:${port}`);
+  console.log(`Node.js server running on http://localhost:${port}`);
 });
 
 // require('dotenv').config(); // Load environment variables
