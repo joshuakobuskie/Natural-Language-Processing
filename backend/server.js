@@ -12,7 +12,7 @@ app.use(express.json());
 
 app.post("/api/generate", async (req, res) => {
 
-  var dataToSend = "";
+  var dataToSend = "";  // ./temp.py is the file to change to iteract with .py logic for backend processing of user inputs
   const process = spawn("python3", ["./temp.py", req.body.prompt, JSON.stringify(req.body.rag), JSON.stringify(req.body.history)] ); 
 
   process.stdout.on("data", (data) => {
