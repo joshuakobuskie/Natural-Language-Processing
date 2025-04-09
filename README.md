@@ -8,4 +8,4 @@ npm start
 
 **To start the back-end server, please run the following commands:**  
 cd backend  
-node server.js
+flask --app app run --host 0.0.0.0 --port 5001
