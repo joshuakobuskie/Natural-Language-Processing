@@ -7,17 +7,12 @@ const ChatInterface = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dots, setDots] = useState('');
-  const [useRag, setUseRag] = useState(false);
-  const [useHistory, setUseHistory] = useState(false);
+  const [rag, setRag] = useState(false);
+  const [topK, setTopK] = useState(5);
+  const [historyWindow, setHistoryWindow] = useState(10);
+  const [filter, setFilter] = useState(true);
+  const [similarityThreshold, setSimilarityThreshold] = useState(0.4);
   const messagesEndRef = useRef(null);
-
-  const handleRagChange = checked => {
-    setUseRag(checked);
-  };
-
-  const handleHistoryChange = checked => {
-    setUseHistory(checked);
-  };
 
   // Dot animation effect
   useEffect(() => {
@@ -63,7 +58,7 @@ const ChatInterface = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: input, rag: useRag, history: useHistory ? messages : [] }),
+        body: JSON.stringify({ prompt: input, rag: rag ? messages : [] }),
       });
 
       // Display the AI response
@@ -113,13 +108,13 @@ const ChatInterface = () => {
           <div className="switch-container">
             <div className="switch-row">
               <span>RAG:</span>
-              <Switch onChange={handleRagChange} checked={useRag} className="react-switch" />
+              <Switch onChange={() => setRag(!rag)} checked={rag} className="react-switch" />
             </div>
 
-            <div className="switch-row">
+            {/* <div className="switch-row">
               <span>History:</span>
               <Switch onChange={handleHistoryChange} checked={useHistory} className="react-switch" />
-            </div>
+            </div> */}
           </div>
 
           <button type="submit" disabled={isLoading}>
