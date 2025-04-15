@@ -29,12 +29,8 @@ const ChatInterface = () => {
   }, [isLoading]);
 
   // Scrolls to the bottom of the messages
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSubmit = async (e) => {
