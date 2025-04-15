@@ -8,6 +8,7 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [dots, setDots] = useState('');
   const [rag, setRag] = useState(false);
+  const [show, setShow] = useState(false);
   const [topK, setTopK] = useState(5);
   const [historyWindow, setHistoryWindow] = useState(10);
   const [filter, setFilter] = useState(true);
@@ -102,6 +103,9 @@ const ChatInterface = () => {
         />
         <div className="button-container">
           <div className="switch-container">
+            <div className="options">
+              <span onClick={() => setShow(!show)}><u>Advanced</u></span>
+            </div>
             <div className="switch-row">
               <span>RAG:</span>
               <Switch onChange={() => setRag(!rag)} checked={rag} className="react-switch" />
