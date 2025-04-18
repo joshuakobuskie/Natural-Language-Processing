@@ -56,7 +56,7 @@ const ChatInterface = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: input, rag: rag, history: messages, topK: topK, historyWindow: historyWindow, filter: filter, similarityThreshold: similarityThreshold}),
+        body: JSON.stringify({ prompt: input, rag: rag, history: messages, topK: topK, historyWindow: historyWindow, filter: filter, similarityThreshold: similarityThreshold, bm25: bm25}),
       });
 
       // Display the AI response
@@ -125,11 +125,11 @@ const ChatInterface = () => {
                 Filter: <input type="checkbox" value={filter} onChange={(e) => setFilter(e.target.value)}></input>
               </label>
               <label className="form-label">
-                BM25: <input type="checkbox" value={bm25} onChange={(e) => setBM25(e.target.value)}></input>
-              </label>
-              <label className="form-label">
                 Similarity Threshold: 
                 <input className="form-row" type="number" value={similarityThreshold} onChange={(e) => setSimilarityThreshold(e.target.value)}></input>
+              </label>
+              <label className="form-label">
+                BM25: <input type="checkbox" value={bm25} onChange={(e) => setBM25(e.target.value)}></input>
               </label>
             </div>
             )}
