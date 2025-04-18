@@ -55,7 +55,7 @@ const ChatInterface = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: input, rag: rag ? messages : [] }),
+        body: JSON.stringify({ prompt: input, rag: rag, history: messages, topK: topK, historyWindow: historyWindow, filter: filter, similarityThreshold: similarityThreshold}),
       });
 
       // Display the AI response
