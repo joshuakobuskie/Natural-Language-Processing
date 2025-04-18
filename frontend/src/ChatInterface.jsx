@@ -13,6 +13,7 @@ const ChatInterface = () => {
   const [historyWindow, setHistoryWindow] = useState(10);
   const [filter, setFilter] = useState(true);
   const [similarityThreshold, setSimilarityThreshold] = useState(0.4);
+  const [bm25, setBM25] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Dot animation effect
@@ -122,6 +123,9 @@ const ChatInterface = () => {
               </label>
               <label className="form-label">
                 Filter: <input type="checkbox" value={filter} onChange={(e) => setFilter(e.target.value)}></input>
+              </label>
+              <label className="form-label">
+                BM25: <input type="checkbox" value={bm25} onChange={(e) => setBM25(e.target.value)}></input>
               </label>
               <label className="form-label">
                 Similarity Threshold: 
