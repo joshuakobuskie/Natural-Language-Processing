@@ -1,2 +1,2 @@
-def test(prompt, rag, history):
-    return "Prompt: {}  \nRag: {}  \nHistory: {}".format(prompt, rag, history)
+def test(args):
+    return str([arg for arg in args])

@@ -113,21 +113,18 @@ const ChatInterface = () => {
             </div>
             {show && (
             <div className="switch-container">
-              <label className="form-label">
-                Top K: 
-                <input className="form-row" type="number" value={topK} onChange={(e) => setTopK(e.target.value)}></input>
-              </label>
-              <label className="form-label">
-                History Window: 
-                <input className="form-row" type="number" value={historyWindow} onChange={(e) => setHistoryWindow(e.target.value)}></input>
-              </label>
+              <label className="form-label">Top K:</label>
+              <input className="form-input" type="number" min="0" max="10" step="1" value={topK} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 10) {setTopK(Number(e.target.value))}}}></input>
+              {topK}
+              <label className="form-label">History Window:</label>
+              <input className="form-input" type="number" min="0" max="100" step="1" value={historyWindow} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 100) {setHistoryWindow(Number(e.target.value))}}}></input>
+              {historyWindow}
               <label className="form-label">
                 Filter: <input type="checkbox" value={filter} onChange={(e) => setFilter(e.target.value)}></input>
               </label>
-              <label className="form-label">
-                Similarity Threshold: 
-                <input className="form-row" type="number" value={similarityThreshold} onChange={(e) => setSimilarityThreshold(e.target.value)}></input>
-              </label>
+              <label className="form-label">Similarity Threshold:</label>
+              <input className="form-input" type="number" min="0.0" max="1.0" step="0.05" value={similarityThreshold} onChange={(e) => { if (Number(e.target.value) >= 0.0 && Number(e.target.value) <= 1.0) {setSimilarityThreshold(Number(e.target.value))}}}></input>
+              {similarityThreshold}
               <label className="form-label">
                 BM25: <input type="checkbox" value={bm25} onChange={(e) => setBM25(e.target.value)}></input>
               </label>

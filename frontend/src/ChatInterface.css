@@ -120,17 +120,16 @@
     flex-wrap: wrap;
     gap: 10px;
   }
-
-  .form-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
   
   .form-label {
     text-align: left;
+    display: flex;
+    gap: 4px;
   }
   
   .form-input {
-    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
   }
