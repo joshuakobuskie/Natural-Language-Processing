@@ -111,26 +111,24 @@ const ChatInterface = () => {
               <Switch onChange={() => setRag(!rag)} checked={rag} className="react-switch" />
             </div>
             {show && (
-            <form className="switch-container">
+            <div className="switch-container">
               <label className="form-label">
                 Top K: 
                 <input className="form-row" type="number" value={topK} onChange={(e) => setTopK(e.target.value)}></input>
               </label>
-              
               <label className="form-label">
                 History Window: 
                 <input className="form-row" type="number" value={historyWindow} onChange={(e) => setHistoryWindow(e.target.value)}></input>
               </label>
               <label className="form-label">
-                Filter: 
-                <input className="form-row" type="checkbox" value={filter} onChange={(e) => setFilter(e.target.value)}></input>
+                Filter: <input type="checkbox" value={filter} onChange={(e) => setFilter(e.target.value)}></input>
               </label>
               <label className="form-label">
                 Similarity Threshold: 
                 <input className="form-row" type="number" value={similarityThreshold} onChange={(e) => setSimilarityThreshold(e.target.value)}></input>
               </label>
-            </form>
-          )}
+            </div>
+            )}
           </div>
           
           <button type="submit" disabled={isLoading}>

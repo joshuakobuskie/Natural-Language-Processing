@@ -47,7 +47,7 @@
   .input-form {
     display: flex;
     gap: 10px;
-    align-items: center;
+    align-items: center stretch;
   }
   
   .input-form textarea {
@@ -61,6 +61,7 @@
     width: 100%;
     font-family: inherit;
     font-size: inherit;
+    height: auto;
   }
   
   .input-form button {
