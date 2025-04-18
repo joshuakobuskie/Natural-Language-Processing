@@ -103,20 +103,36 @@ const ChatInterface = () => {
         />
         <div className="button-container">
           <div className="switch-container">
-            <div className="options">
+            <div className="switch-row-clickable">
               <span onClick={() => setShow(!show)}><u>Advanced</u></span>
             </div>
             <div className="switch-row">
               <span>RAG:</span>
               <Switch onChange={() => setRag(!rag)} checked={rag} className="react-switch" />
             </div>
-
-            {/* <div className="switch-row">
-              <span>History:</span>
-              <Switch onChange={handleHistoryChange} checked={useHistory} className="react-switch" />
-            </div> */}
+            {show && (
+            <form className="switch-container">
+              <label className="form-label">
+                Top K: 
+                <input className="form-row" type="number" value={topK} onChange={(e) => setTopK(e.target.value)}></input>
+              </label>
+              
+              <label className="form-label">
+                History Window: 
+                <input className="form-row" type="number" value={historyWindow} onChange={(e) => setHistoryWindow(e.target.value)}></input>
+              </label>
+              <label className="form-label">
+                Filter: 
+                <input className="form-row" type="checkbox" value={filter} onChange={(e) => setFilter(e.target.value)}></input>
+              </label>
+              <label className="form-label">
+                Similarity Threshold: 
+                <input className="form-row" type="number" value={similarityThreshold} onChange={(e) => setSimilarityThreshold(e.target.value)}></input>
+              </label>
+            </form>
+          )}
           </div>
-
+          
           <button type="submit" disabled={isLoading}>
             Send
           </button>

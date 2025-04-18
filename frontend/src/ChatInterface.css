@@ -99,22 +99,37 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    justify-content: center;
+  }
+
+  .switch-row-clickable {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    cursor: pointer;
   }
 
   .switch-row span {
     height: 24px;
   }
 
-  .options {
-    justify-content: center;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-  }
-
   .button-container {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+
+  .form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .form-label {
+    text-align: left;
+  }
+  
+  .form-input {
+    flex: 1;
   }
