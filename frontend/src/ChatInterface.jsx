@@ -118,12 +118,12 @@ const ChatInterface = () => {
               <label className="form-label">History Window:</label>
               <input className="form-input" type="number" min="0" max="100" step="1" value={historyWindow.toString()} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 100) {setHistoryWindow(Number(e.target.value))}}}></input>
               <label className="form-label">
-                Filter: <input type="checkbox" value={filter} onChange={(e) => setFilter(e.target.value)}></input>
+                Filter: <input type="checkbox" checked={filter} onChange={(e) => setFilter(e.target.checked)}></input>
               </label>
               <label className="form-label">Similarity Threshold:</label>
               <input className="form-input" type="number" min="0.0" max="1.0" step="0.05" value={similarityThreshold.toString()} onChange={(e) => { if (Number(e.target.value) >= 0.0 && Number(e.target.value) <= 1.0) {setSimilarityThreshold(Number(e.target.value))}}}></input>
               <label className="form-label">
-                BM25: <input type="checkbox" value={bm25} onChange={(e) => setBM25(e.target.value)}></input>
+                BM25: <input type="checkbox" checked={bm25} onChange={(e) => setBM25(e.target.checked)}></input>
               </label>
             </div>
             )}
