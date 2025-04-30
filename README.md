@@ -9,4 +9,7 @@ Using DANGEROUSLY_DISABLE_HOST_CHECK=true allows access with ngrok
 
 **To start the back-end server, please run the following commands:**  
 cd backend  
-flask --app app run --host 0.0.0.0 --port 5000
+flask --app app run --host 0.0.0.0 --port 5000  
+
+**To allow remote access with ngrok, please run the following commands:**
+ngrok http 3000  
