@@ -51,7 +51,7 @@ const ChatInterface = () => {
 
     try {
       // Calls backend API
-      const response = await fetch('http://' + window.location.host.slice(0, -5) + ':5001/api/generate', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
