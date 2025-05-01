@@ -1,0 +1,1 @@
+This folder contains a single immediate user log as well as other saved conversations in `saved_chats`

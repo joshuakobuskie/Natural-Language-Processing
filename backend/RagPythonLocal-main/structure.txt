@@ -1,0 +1,60 @@
+.
+├── Comprehensive Chatbot Memory Management Strategy Overview.pdf
+├── .env
+├── get_chunks
+│   ├── parse_pdfs_main.py
+│   ├── raw_data_extraction_utils.py
+│   ├── raw_data_sources
+│   │   ├── cited_arxiv_ids.txt
+│   │   ├── cited_paper_metadata.zip
+│   │   ├── compiled_eligible_cited_arxiv_pdfs.zip
+│   │   └── top_500_arxiv_papers.csv
+│   ├── raw_parsed_pdfs.pkl
+│   ├── slow_pdf_processing_times.txt
+│   └── text_utils.py
+├── .gitignore
+├── legacy_files
+│   ├── continuous_response_generation_history_legacy.py
+│   ├── continuous_response_generation_legacy.py
+│   ├── continuous_response_generation_main.py
+│   ├── get_embeddings_old.py
+│   ├── history_utils.py
+│   ├── parse_and_chunk_allinone_legacy.py
+│   └── response_utils_legacy.py
+├── model_prompting_utils.py
+├── qdrant_vector_store
+│   ├── data_embedding_utils.py
+│   ├── dataset
+│   │   ├── data-00000-of-00001.arrow
+│   │   ├── dataset_info.json
+│   │   └── state.json
+│   ├── get_embeddings_main.py
+│   ├── hf_dataset
+│   │   ├── data-00000-of-00001.arrow
+│   │   ├── dataset_info.json
+│   │   └── state.json
+│   ├── local_embedding_models
+│   │   └── Snowflake
+│   │       └── snowflake-arctic-embed-l-v2.0
+│   │           ├── config.json
+│   │           ├── model.safetensors
+│   │           ├── special_tokens_map.json
+│   │           ├── tokenizer_config.json
+│   │           └── tokenizer.json
+│   ├── qdrant_utils.py
+│   └── qdrant_vectors.pkl
+├── query_embedding_utils.py
+├── query_state_filter_utils.py
+├── README.md
+├── requirements.txt
+├── slow_pdf_processing_times.txt
+├── structure.txt
+├── user_history_utils.py
+├── user_output
+│   ├── context_details.md
+│   ├── query_data.json
+│   ├── response_no_context.md
+│   └── response_with_context.md
+└── user_response_main.py
+
+14 directories, 7344 files

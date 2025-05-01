@@ -1,0 +1,24 @@
+# Python virtual environment
+.venv/
+legacy_files
+
+# Data and model files
+*.csv
+*.pdf
+*.json
+*.pkl
+*.zip
+*.jpg
+*.arrow
+*.safetensors
+
+# Bytecode and cache
+__pycache__/
+*.py[cod]
+*.so
+
+# VSCode settings (optional)
+.vscode/
+
+.env
+
