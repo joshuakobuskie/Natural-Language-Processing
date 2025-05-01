@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Switch from "react-switch";
+import { v4 as uuidv4 } from 'uuid';
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
@@ -15,6 +16,8 @@ const ChatInterface = () => {
   const [similarityThreshold, setSimilarityThreshold] = useState(0.4);
   const [bm25, setBM25] = useState(false);
   const messagesEndRef = useRef(null);
+  const [userId, setUserId] = useState(null);
+  const [chatId, setChatId] = useState(null);
 
   // Dot animation effect
   useEffect(() => {
@@ -34,6 +37,21 @@ const ChatInterface = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Saves the user ID for multiple sessions
+  useEffect(() => {
+    let storedId = localStorage.getItem('userId');
+    if (!storedId) {
+      storedId = uuidv4();
+      localStorage.setItem('userId', storedId);
+    }
+    setUserId(storedId);
+  }, []);
+
+  // Saves the chat ID for one session
+  useEffect(() => {
+    setChatId(uuidv4());
+  }, []);
 
   const handleSubmit = async (e) => {
 
