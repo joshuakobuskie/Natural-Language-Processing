@@ -15,6 +15,7 @@ const ChatInterface = () => {
   const [filter, setFilter] = useState(true);
   const [similarityThreshold, setSimilarityThreshold] = useState(0.4);
   const [bm25, setBM25] = useState(false);
+  const [topicRetrieval, setTopicRetrieval] = useState(false);
   const messagesEndRef = useRef(null);
   const [userId, setUserId] = useState(null);
   const [chatId, setChatId] = useState(null);
@@ -74,7 +75,7 @@ const ChatInterface = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: input, rag: rag, history: messages, topK: topK, historyWindow: historyWindow, filter: filter, similarityThreshold: similarityThreshold, bm25: bm25}),
+        body: JSON.stringify({ prompt: input, rag: rag, topK: topK, historyWindow: historyWindow, filter: filter, similarityThreshold: similarityThreshold, bm25: bm25, topicRetrieval: topicRetrieval}),
       });
 
       // Display the AI response
@@ -127,7 +128,7 @@ const ChatInterface = () => {
             </div>
             <div className="switch-row">
               <span>RAG:</span>
-              <Switch onChange={() => setRag(!rag)} checked={rag} className="react-switch" />
+              <Switch onChange={() => {if (rag) {setBM25(false); setTopicRetrieval(false)}; setRag(!rag)}} checked={rag} className="react-switch" />
             </div>
             {show && (
             <div className="switch-container">
@@ -136,12 +137,15 @@ const ChatInterface = () => {
               <label className="form-label">History Window:</label>
               <input className="form-input" type="number" min="0" max="100" step="1" value={historyWindow.toString()} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 100) {setHistoryWindow(Number(e.target.value))}}}></input>
               <label className="form-label">
-                Filter: <input type="checkbox" checked={filter} onChange={(e) => setFilter(e.target.checked)}></input>
+                History Filter: <input type="checkbox" checked={filter} onChange={(e) => {if (!e.target.checked) {setSimilarityThreshold(Number(0.0))}; setFilter(e.target.checked)}}></input>
               </label>
-              <label className="form-label">Similarity Threshold:</label>
-              <input className="form-input" type="number" min="0.0" max="1.0" step="0.05" value={similarityThreshold.toString()} onChange={(e) => { if (Number(e.target.value) >= 0.0 && Number(e.target.value) <= 1.0) {setSimilarityThreshold(Number(e.target.value))}}}></input>
-              <label className="form-label">
-                BM25: <input type="checkbox" checked={bm25} onChange={(e) => setBM25(e.target.checked)}></input>
+              <label className={"form-label" + (!filter && " disabled")}>Similarity Threshold:</label>
+              <input className={"form-input" + (!filter && " disabled")} disabled={!filter} type="number" min="0.0" max="1.0" step="0.05" value={similarityThreshold.toString()} onChange={(e) => { if (Number(e.target.value) >= 0.0 && Number(e.target.value) <= 1.0) {setSimilarityThreshold(Number(e.target.value))}}}></input>
+              <label className={"form-label" + (!rag && " disabled")}>
+                BM25: <input type="checkbox" checked={bm25} disabled={!rag} onChange={(e) => {setBM25(e.target.checked)}}></input>
+              </label>
+              <label className={"form-label" + (!rag && " disabled")}>
+                Topic Retrieval: <input type="checkbox" checked={topicRetrieval} disabled={!rag} onChange={(e) => {setTopicRetrieval(e.target.checked)}}></input>
               </label>
             </div>
             )}

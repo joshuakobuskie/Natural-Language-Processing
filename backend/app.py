@@ -2,10 +2,16 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 from temp import test
-from RagPythonLocal.rag_user_chat import initialize_user_chat, input_query
+from rag_user_chat import initialize_user_chat, input_query, end_user_session
 
 app = Flask(__name__)
 CORS(app)
+
+def user_rag_query(user_output_folder, saved_chats_topic_name, frontend_inputs, task_folder='saved_chats'):
+    user_chat_settings = initialize_user_chat(task_folder, user_output_folder, saved_chats_topic_name)
+    user_chat_settings = input_query(user_chat_settings, frontend_inputs)
+    end_user_session(user_chat_settings)
+    return user_chat_settings['user_query_state_history'][max(user_chat_settings['user_query_state_history'])]['response_text']
 
 @app.route("/api/generate", methods=["POST"])
 def handle_generate():
