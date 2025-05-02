@@ -21,31 +21,33 @@ def handle_generate():
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        #Enforce rules below
+        
         prompt = data.get("prompt", "")
         rag = data.get("rag", False)
-
-        #Set this as bool for if historyWindow==0: false
-        history = data.get("history", [])
-
-        #Force int
         topK = data.get("topK", 5)
-
-        #force int
         historyWindow = data.get("historyWindow", 10)
-
-        #if filter is on, use similarity threshold. If off, set threshold to 0.0
         filter = data.get("filter", True)
         similarityThreshold = data.get("similarityThreshold", 0.4)
-
-        #If rag is off, set bm25 to false
         bm25 = data.get("bm25", False)
+        topicRetreival = data.get("topicRetrieval", False)
 
-        #If rag is off, set topic retreival to false
-        topic_retreival = data.get()
+        #Enforcing types and rules
+        prompt = str(prompt)
+        rag = bool(rag)
+        topK = int(topK)
+        historyWindow = int(historyWindow)
+        filter = bool(filter)
+        similarityThreshold = float(similarityThreshold)
+        bm25 = bool(bm25)
+        topicRetreival = bool(topicRetreival)
 
+        if not rag:
+            bm25 = False
+            topicRetreival = False
 
-
+        if not filter:
+            similarityThreshold = 0.0
+        
         if not prompt:
             return jsonify({"error": "No data provided"}), 400
 
