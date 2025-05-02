@@ -12,4 +12,3 @@ job_1 = {
 }
 
 print(user_rag_query("User_1", "Chat_1", job_1))
-print(user_rag_query("User_1", "Chat_1", job_1))
