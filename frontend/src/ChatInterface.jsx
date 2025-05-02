@@ -75,7 +75,7 @@ const ChatInterface = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: input, rag: rag, topK: topK, historyWindow: historyWindow, filter: filter, similarityThreshold: similarityThreshold, bm25: bm25, topicRetrieval: topicRetrieval}),
+        body: JSON.stringify({ prompt: input, rag: rag, topK: topK, historyWindow: historyWindow, filter: filter, similarityThreshold: similarityThreshold, bm25: bm25, topicRetrieval: topicRetrieval, userId: userId, chatId: chatId}),
       });
 
       // Display the AI response
@@ -137,7 +137,7 @@ const ChatInterface = () => {
               <label className="form-label">History Window:</label>
               <input className="form-input" type="number" min="0" max="100" step="1" value={historyWindow.toString()} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 100) {setHistoryWindow(Number(e.target.value))}}}></input>
               <label className="form-label">
-                History Filter: <input type="checkbox" checked={filter} onChange={(e) => {if (!e.target.checked) {setSimilarityThreshold(Number(0.0))}; setFilter(e.target.checked)}}></input>
+                History Filter: <input type="checkbox" checked={filter} onChange={(e) => {if (!e.target.checked) {setSimilarityThreshold(Number(0.0))} else {setSimilarityThreshold(Number(0.4))}; setFilter(e.target.checked)}}></input>
               </label>
               <label className={"form-label" + (!filter && " disabled")}>Similarity Threshold:</label>
               <input className={"form-input" + (!filter && " disabled")} disabled={!filter} type="number" min="0.0" max="1.0" step="0.05" value={similarityThreshold.toString()} onChange={(e) => { if (Number(e.target.value) >= 0.0 && Number(e.target.value) <= 1.0) {setSimilarityThreshold(Number(e.target.value))}}}></input>
