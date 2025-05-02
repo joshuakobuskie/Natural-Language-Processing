@@ -61,8 +61,8 @@ def handle_generate():
         if historyWindow < 0:
             historyWindow = 0
 
-        if historyWindow > 100:
-            historyWindow = 100
+        if historyWindow > 10:
+            historyWindow = 10
 
         if similarityThreshold < 0.0:
             similarityThreshold = 0.0

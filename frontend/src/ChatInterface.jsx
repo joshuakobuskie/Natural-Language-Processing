@@ -135,7 +135,7 @@ const ChatInterface = () => {
               <label className="form-label">Top K:</label>
               <input className="form-input" type="number" min="0" max="10" step="1" value={topK.toString()} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 10) {setTopK(Number(e.target.value))}}}></input>
               <label className="form-label">History Window:</label>
-              <input className="form-input" type="number" min="0" max="100" step="1" value={historyWindow.toString()} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 100) {setHistoryWindow(Number(e.target.value))}}}></input>
+              <input className="form-input" type="number" min="0" max="10" step="1" value={historyWindow.toString()} onChange={(e) => { if (Number(e.target.value) >= 0 && Number(e.target.value) <= 10) {setHistoryWindow(Number(e.target.value))}}}></input>
               <label className="form-label">
                 History Filter: <input type="checkbox" checked={filter} onChange={(e) => {if (!e.target.checked) {setSimilarityThreshold(Number(0.0))} else {setSimilarityThreshold(Number(0.4))}; setFilter(e.target.checked)}}></input>
               </label>
