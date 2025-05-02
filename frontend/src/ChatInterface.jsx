@@ -98,7 +98,7 @@ const ChatInterface = () => {
             key={index}
             className={`message ${msg.isUser ? 'user' : 'ai'}`}
           >
-            <ReactMarkdown components={{p: ({ children }) => <>{children}</>,}}>{msg.text}</ReactMarkdown>
+            <ReactMarkdown>{msg.text}</ReactMarkdown>
           </div>
         ))}
         {isLoading && (
