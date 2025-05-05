@@ -18,6 +18,7 @@ import torch
 from qdrant_vector_store.data_embedding_utils import instantiate_model_and_tokenizer
 from query_embedding_utils import get_query_embedding
 from query_embedding_utils import get_context_chunks
+from sklearn.metrics.pairwise import cosine_similarity
 
 # For interacting with Qdrant Client
 from qdrant_vector_store.qdrant_utils import load_to_vector_store
@@ -36,6 +37,8 @@ from qdrant_vector_store.data_embedding_utils import markdown_to_text # This fun
 from model_prompting_utils import get_system_prompt
 from model_prompting_utils import display_summary
 from model_prompting_utils import topic_level_context_retrieval
+from model_prompting_utils import generate_response_with_retry
+from model_prompting_utils import build_citation_string_final
 
 # For filtering
 from query_state_filter_utils import current_query_to_prior_queries_filter
@@ -45,7 +48,7 @@ from user_history_utils import save_chat_pkl_by_embedding
 from user_history_utils import load_chat_pkl
 from dotenv import load_dotenv
 
-def initialize_gemini_model():
+def initialize_gemini_model(user_system_prompt=''):
     """
     Loads the API key from the .env file and initializes the Gemini model.
     
@@ -57,8 +60,11 @@ def initialize_gemini_model():
     genai.configure(api_key=GEMINI_API_KEY)
     
     LLM_MODEL_NAME = "gemini-2.0-flash-lite"
-    LLM_SYSTEM_PROMPT = get_system_prompt()  # Assuming this is defined elsewhere
-    
+    if len(user_system_prompt) == 0:
+        LLM_SYSTEM_PROMPT = get_system_prompt()  # Assuming this is defined elsewhere
+    else:
+        LLM_SYSTEM_PROMPT = user_system_prompt
+
     LLM_MODEL = genai.GenerativeModel(model_name=LLM_MODEL_NAME, system_instruction=LLM_SYSTEM_PROMPT)
     return LLM_MODEL, LLM_SYSTEM_PROMPT
 
@@ -80,6 +86,15 @@ def initialize_qdrant_collections(EMBEDDING_MODEL):
     instantiate_collection(qdrant_client=QDRANT_CLIENT, collection_name=HISTORY_COLLECTION, embedding_size=EMBEDDING_MODEL.config.hidden_size)
     
     return QDRANT_CLIENT, CHUNK_COLLECTION, HISTORY_COLLECTION
+
+def flush_prior_qdrant_client_and_initialize_new_client(client: QdrantClient, EMBEDDING_MODEL, old_collection_name="history_collection", new_collection_name="history_collection"):
+    # del client name from qdrant_client store
+    client.delete_collection(collection_name=old_collection_name)
+
+    HISTORY_COLLECTION = new_collection_name
+    instantiate_collection(qdrant_client=client, collection_name=HISTORY_COLLECTION, embedding_size=EMBEDDING_MODEL.config.hidden_size)
+
+    print(f"Collection \"{old_collection_name}\" has been deleted; a clean new collection \"{new_collection_name}\" has been instantiated for the next user.")
 
 def load_query_history(QDRANT_CLIENT: QdrantClient, 
                        HISTORY_COLLECTION: str, 
@@ -257,6 +272,12 @@ def process_query(DESIRED_HISTORY_WINDOW_SIZE: int,
         "total_token_count" : None, # Optional[int]: Total tokens processed by LLM
         "system_prompt_used": LLM_SYSTEM_PROMPT, # Optional[str]: System Prompt used to generate the current response
         "dynamic_prompt_body": None, # Optional[str]: Generated prompt passed to the LLM based on history/context utilizing `build_historical_query_response_thread` function
+        "arxiv_paper_citation_string": None,  # Optional[str]: A string comprised of arXiv citation info for the top_k retrieved chunks
+
+        # Newly Added Fields for Robust Generation/Error Handling
+        "generation_attempts": 1,  # int: Number of tries attempted during response generation
+        "generation_finish_reason": None,  # Optional[str]: Finish reason reported by the Gemini API (e.g., STOP, RECITATION, SAFETY)
+        "error_flag": None,  # Optional[str]: Marker for generation failure type (e.g., GENERATION_FAILED, METADATA_EXTRACTION_FAILED)
 
         ############## 
         # Requires Retrieval (RAG_SWITCH = True) from here and below
@@ -640,8 +661,6 @@ def process_query(DESIRED_HISTORY_WINDOW_SIZE: int,
             
             return chunk_vectors
 
-        from sklearn.metrics.pairwise import cosine_similarity
-
         # Function to calculate average similarity for a group of chunks (a topic)
         def calculate_average_similarity_for_topic(topic_chunk_ids, chunk_embeddings):
             # Extract embeddings for the chunks in the given topic
@@ -861,44 +880,92 @@ def process_query(DESIRED_HISTORY_WINDOW_SIZE: int,
                                 chunk_text_token_counts
         )
 
-        # Function to extract publish year and month from arxiv_id
-        def get_publish_date(arxiv_id):
-            year_month_together = arxiv_id.split('.')[0]
-            year, month = year_month_together[:2], year_month_together[3:]
+        citation_string = build_citation_string_final(chunk_info_display)
 
-            year = '20' + year
-            if len(month) < 2:
-                month = '0' + month
+        user_query_state_history[query_num].update({
+                "arxiv_paper_citation_string": citation_string
+            }
+            )
 
-            return f"{year}-{month}"
+        # # Printing pairs with chunk IDs, titles, publish dates, and links
+        # for arxiv_id, title, chunk_id, header_hierarchy, token_count in chunk_info_display:
+        #     publish_date = get_publish_date(arxiv_id)
+        #     arxiv_link = f"https://arxiv.org/abs/{arxiv_id}"
 
-        # Printing pairs with chunk IDs, titles, publish dates, and links
-        for arxiv_id, title, chunk_id, header_hierarchy, token_count in chunk_info_display:
-            publish_date = get_publish_date(arxiv_id)
-            arxiv_link = f"https://arxiv.org/abs/{arxiv_id}"
+        #     #print(header_hierarchy)
 
-            #print(header_hierarchy)
+        #     header_str = " ---> ".join(value for key, value in header_hierarchy.items())
 
-            header_str = " ---> ".join(value for key, value in header_hierarchy.items())
+        #     #print(f"#### Chunk ID: {chunk_id}, Title: {title}, Publish Date: {publish_date} , Link: {arxiv_link}, # of Tokens: {token_count}, Section: {header_str}")
 
-            print(f"#### Chunk ID: {chunk_id}, Title: {title}, Publish Date: {publish_date} , Link: {arxiv_link}, # of Tokens: {token_count}, Section: {header_str}")
+    ###### ORIGINAL RESPONSE GENERATION WITHOUT GENERATION ERROR HANDLING
 
-    response = standalone_prompt_model(llm_model=LLM_MODEL, historical_prompt=dynamic_prompt_body, context_prompt=current_context_prompt_body)
+    # response = standalone_prompt_model(llm_model=LLM_MODEL, historical_prompt=dynamic_prompt_body, context_prompt=current_context_prompt_body)
+    # #response = '' # uncomment this and comment above response out to test system
 
+    # end_time = time.time()
+
+    # query_stop_timestamp = datetime.now().isoformat()
+    # query_processing_end_time = end_time - query_processing_start_time
+
+    # user_query_state_history[query_num].update({
+    #          "response_text" : response.text, # the response text of the model
+    #          "prompt_token_count" : response.usage_metadata.prompt_token_count, # token count for input prompt to LLM
+    #          "candidates_token_count" : response.usage_metadata.candidates_token_count, # utilized tokens from input prompt to LLM to generate response
+    #          "total_token_count" : response.usage_metadata.total_token_count, # total tokens processed by LLM
+    #          "query_finish_time" : query_stop_timestamp,
+    #          "query_processing_time" : query_processing_end_time,
+    # }
+    # )
+    #################
+    
+    ###### NEW RESPONSE GENERATION WITH GENERATION ERROR HANDLING
+
+    # === Construct prompt exactly like standalone_prompt_model ===
+    full_prompt = dynamic_prompt_body + current_context_prompt_body  # add system_prompt if used
+
+    # === Track generation time ===
+    query_processing_start_time = time.time()
+
+    # === Generate response (with retry and error handling) ===
+    response = generate_response_with_retry(prompt=full_prompt, 
+                                            model=LLM_MODEL,
+                                            max_tries=3
+    )
+
+    # === Time tracking ===
     end_time = time.time()
-
     query_stop_timestamp = datetime.now().isoformat()
     query_processing_end_time = end_time - query_processing_start_time
 
-    user_query_state_history[query_num].update({
-            "response_text" : response.text, # the response text of the model
-            "prompt_token_count" : response.usage_metadata.prompt_token_count, # token count for input prompt to LLM
-            "candidates_token_count" : response.usage_metadata.candidates_token_count, # utilized tokens from input prompt to LLM to generate response
-            "total_token_count" : response.usage_metadata.total_token_count, # total tokens processed by LLM
-            "query_finish_time" : query_stop_timestamp,
-            "query_processing_time" : query_processing_end_time,
-    }
-    )
+    # === Safe storage into query state ===
+    if response:
+        try:
+            user_query_state_history[query_num].update({
+                "response_text": response.text,
+                "prompt_token_count": response.usage_metadata.prompt_token_count,
+                "candidates_token_count": response.usage_metadata.candidates_token_count,
+                "total_token_count": response.usage_metadata.total_token_count,
+                "query_finish_time": query_stop_timestamp,
+                "query_processing_time": query_processing_end_time,
+                "error_flag": None
+            })
+        except Exception as e:
+            print(f"❌ Failed to extract metadata: {e}")
+            user_query_state_history[query_num].update({
+                "response_text": "[RESPONSE_METADATA_EXTRACTION_FAILED]",
+                "query_finish_time": query_stop_timestamp,
+                "query_processing_time": query_processing_end_time,
+                "error_flag": "METADATA_EXTRACTION_FAILED"
+            })
+    else:
+        user_query_state_history[query_num].update({
+            "response_text": "[GENERATION_FAILED]",
+            "query_finish_time": query_stop_timestamp,
+            "query_processing_time": query_processing_end_time,
+            "error_flag": "GENERATION_FAILED_OR_BLOCKED"
+        })
+        print(f"⚠️ WARNING: No valid response for query_num={query_num}. Placeholder inserted.")
     
     #response_plaintext = markdown_to_text(response.text)
     #response_plaintext = response_plaintext.split('\n')
@@ -919,40 +986,40 @@ def process_query(DESIRED_HISTORY_WINDOW_SIZE: int,
 
     return user_query_state_history[query_num]
 
-def save_chat_pkl_by_embedding(user_query_state_history,
-                                embedded_path='user_output/user_embedded_history.pkl',
-                                non_embedded_path='user_output/user_non_embedded_history.pkl'):
-    # Load or initialize existing embedded history
-    if os.path.exists(embedded_path):
-        with open(embedded_path, 'rb') as f:
-            embedded_data = pickle.load(f)
-    else:
-        embedded_data = {"query_states": []}
+# def save_chat_pkl_by_embedding(user_query_state_history,
+#                                 embedded_path='user_output/user_embedded_history.pkl',
+#                                 non_embedded_path='user_output/user_non_embedded_history.pkl'):
+#     # Load or initialize existing embedded history
+#     if os.path.exists(embedded_path):
+#         with open(embedded_path, 'rb') as f:
+#             embedded_data = pickle.load(f)
+#     else:
+#         embedded_data = {"query_states": []}
 
-    # Load or initialize existing non-embedded history
-    if os.path.exists(non_embedded_path):
-        with open(non_embedded_path, 'rb') as f:
-            non_embedded_data = pickle.load(f)
-    else:
-        non_embedded_data = {"query_states": []}
+#     # Load or initialize existing non-embedded history
+#     if os.path.exists(non_embedded_path):
+#         with open(non_embedded_path, 'rb') as f:
+#             non_embedded_data = pickle.load(f)
+#     else:
+#         non_embedded_data = {"query_states": []}
 
-    # Create lookup sets for already saved entries
-    embedded_ids = {entry["query_number"] for entry in embedded_data["query_states"]}
-    non_embedded_ids = {entry["query_number"] for entry in non_embedded_data["query_states"]}
+#     # Create lookup sets for already saved entries
+#     embedded_ids = {entry["query_number"] for entry in embedded_data["query_states"]}
+#     non_embedded_ids = {entry["query_number"] for entry in non_embedded_data["query_states"]}
 
-    # Split and append only new entries
-    for q_num, entry in user_query_state_history.items():
-        if entry.get("rag_used") and q_num not in embedded_ids:
-            embedded_data["query_states"].append(entry)
-        elif not entry.get("rag_used") and q_num not in non_embedded_ids:
-            non_embedded_data["query_states"].append(entry)
+#     # Split and append only new entries
+#     for q_num, entry in user_query_state_history.items():
+#         if entry.get("rag_used") and q_num not in embedded_ids:
+#             embedded_data["query_states"].append(entry)
+#         elif not entry.get("rag_used") and q_num not in non_embedded_ids:
+#             non_embedded_data["query_states"].append(entry)
 
-    # Save back to files
-    with open(embedded_path, 'wb') as f:
-        pickle.dump(embedded_data, f)
+#     # Save back to files
+#     with open(embedded_path, 'wb') as f:
+#         pickle.dump(embedded_data, f)
 
-    with open(non_embedded_path, 'wb') as f:
-        pickle.dump(non_embedded_data, f)
+#     with open(non_embedded_path, 'wb') as f:
+#         pickle.dump(non_embedded_data, f)
 
 def main():
     # Initialize the environment (this happens once)

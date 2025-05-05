@@ -69,6 +69,105 @@ def standalone_prompt_model(llm_model, historical_prompt='', system_prompt='', c
 
     return response
 
+def adjust_prompt(prompt, attempt):
+    # Simple heuristic to bypass recitation filters
+    return prompt + f"\n\n(Please respond in original phrasing.) [Retry {attempt}]"
+
+# Had a wild error that needs to be handled.
+# ValueError: Invalid operation: The `response.text` quick accessor requires the response to contain a valid `Part`, but none were returned. 
+# The candidate's [finish_reason](https://ai.google.dev/api/generate-content#finishreason) is 4. Meaning that the model was reciting from copyrighted material.
+
+from google.ai.generativelanguage_v1.types import Candidate
+
+def generate_response_with_retry(prompt, model, max_tries=3):
+    for attempt in range(1, max_tries + 1):
+        try:
+            response = model.generate_content(prompt)
+            #print(f"[Attempt {attempt}] Response candidates:", response.candidates)
+
+            if not response.candidates:
+                print(f"⚠️ Attempt {attempt}: No candidates returned.")
+                continue
+
+            candidate = response.candidates[0]
+            raw_reason = candidate.finish_reason                     # integer code
+            reason = Candidate.FinishReason(raw_reason)             # enum wrapper
+
+            # 1. RECITATION (unauthorized citation)
+            if reason == Candidate.FinishReason.RECITATION:
+                print(f"⚠️ Attempt {attempt}: RECITATION stop (code {raw_reason}).")
+                prompt = adjust_prompt(prompt, attempt)
+                continue
+
+            # 2. SAFETY (content policy)
+            elif reason == Candidate.FinishReason.SAFETY:
+                print(f"⚠️ Attempt {attempt}: SAFETY filter (code {raw_reason}).")
+                prompt = adjust_prompt(prompt, attempt)
+                continue
+
+            # 3. Normal STOP
+            elif reason == Candidate.FinishReason.STOP:
+                if candidate.content.parts:
+                    print(f"✅ Attempt {attempt}: STOP with content (code {raw_reason}).\n")
+                    return response
+                else:
+                    print(f"⚠️ Attempt {attempt}: STOP but no content to return.")
+                    continue
+
+            # 4. Anything else (MAX_TOKENS, BLOCKLIST, etc.)
+            else:
+                print(f"⚠️ Attempt {attempt}: Unhandled finish_reason {reason.name} (code {raw_reason}).")
+                continue
+
+        except Exception as e:
+            # 5. API/client exceptions
+            print(f"❌ Attempt {attempt}: Exception during generation: {type(e).__name__}: {e}")
+            continue
+
+    print("❌ All attempts failed. No valid response returned.\n")
+    return None
+
+
+def generate_response_with_retry_og(prompt, model, max_tries=3):
+    for attempt in range(1, max_tries + 1):
+        try:
+            response = model.generate_content(prompt)
+            print(response.candidates)
+
+            # "response_text": response.text,
+            # "prompt_token_count": response.usage_metadata.prompt_token_count,
+            # "candidates_token_count": response.usage_metadata.candidates_token_count,
+            # "total_token_count": response.usage_metadata.total_token_count,
+
+
+            print(response)
+            if not response.candidates:
+                print(f"⚠️ Attempt {attempt}: No candidates returned.")
+                continue
+
+            candidate = response.candidates[0]
+            finish_reason = candidate.finish_reason
+
+            if finish_reason == "RECITATION":
+                print(f"⚠️ Attempt {attempt}: Response blocked due to recitation.")
+                prompt = adjust_prompt(prompt, attempt)
+                continue
+            elif finish_reason == "SAFETY":
+                print(f"⚠️ Attempt {attempt}: Response blocked due to safety filters.")
+                prompt = adjust_prompt(prompt, attempt)
+                continue
+            elif finish_reason == "STOP" and candidate.content.parts:
+                print(f"✅ Attempt {attempt}: Response generated successfully.")
+                return response  # Return full response object
+            else:
+                print(f"⚠️ Attempt {attempt}: Unhandled finish_reason: {finish_reason}.")
+
+
+        except Exception as e:
+            print(f"❌ Attempt {attempt}: Exception during generation: {e}")
+    print("❌ All attempts failed. No valid response returned.")
+    return None
+
 def topic_level_context_retrieval(current_query_context_chunks, QDRANT_CLIENT, CHUNK_COLLECTION, verbose=True):
 
     # Get the context chunk ids for the current state
@@ -201,23 +300,143 @@ def topic_level_context_retrieval(current_query_context_chunks, QDRANT_CLIENT, C
 
     def get_chunk_ids_by_bottom_level_headers(chunk_ids_by_header, example_headers):
         """
-        Get a list of chunk IDs that match the bottom-level sections of the original header tuples.
-        This approach handles multi-level headers by always selecting the last level.
+        Get a dictionary of chunk IDs that match the bottom-level sections of the original header tuples.
+        This function handles malformed or empty headers by assigning unique placeholders
+        to preserve distinction and avoid key collisions in the dictionary.
         """
-        # Initialize a list to store the matching chunk IDs
-        matched_chunk_ids = {}
+        # === Step 1: Safely extract bottom-level headers ===
+        bottom_level_headers = []
+        header_placeholder_counter = 0
 
-        # Extract the bottom-level header from each original header tuple
-        bottom_level_headers = [header[-1] for header in example_headers]
+        for header in example_headers:
+            if len(header) > 0:
+                bottom_level_headers.append(header[-1])
+            else:
+                placeholder = f"ERROR_NO_HEADER_PLACEHOLDER_{header_placeholder_counter}"
+                #print(f"⚠ Assigned unique placeholder to bottom_level_headers: {placeholder}")
+                bottom_level_headers.append(placeholder)
+                header_placeholder_counter += 1
 
-        # Filter the dictionary keys based on the bottom-level headers
-        filtered_chunk_ids_by_header = {
-            key: value
-            for key, value in chunk_ids_by_header.items()
-            if key in bottom_level_headers
-        }
+        #if header_placeholder_counter > 1:
+            #print(f"!!! MULTIPLE_UNIQUE_PLACEHOLDERS_IN_HEADERS: {header_placeholder_counter} unknown example_headers assigned unique placeholders")
 
+        # === Step 2: Normalize keys in chunk_ids_by_header ===
+        normalized_chunk_ids_by_header = {}
+        chunk_placeholder_counter = 0
+
+        for key, value in chunk_ids_by_header.items():
+            if key is None or (isinstance(key, str) and key.strip() == ''):
+                placeholder_key = f"ERROR_NO_HEADER_PLACEHOLDER_{chunk_placeholder_counter}"
+                #print(f"⚠ Assigned unique placeholder key to chunk_ids_by_header: {placeholder_key} for value: {value}")
+                normalized_chunk_ids_by_header[placeholder_key] = value
+                chunk_placeholder_counter += 1
+            else:
+                normalized_chunk_ids_by_header[key] = value
+
+        #if chunk_placeholder_counter > 1:
+            #print(f"!!! MULTIPLE_UNIQUE_PLACEHOLDERS_IN_CHUNKS: {chunk_placeholder_counter} malformed chunk_ids_by_header keys assigned unique placeholders")
+
+        # === Step 3: Filter normalized chunk IDs by bottom-level headers ===
+        filtered_chunk_ids_by_header = {}
+        #print("\nFiltering normalized_chunk_ids_by_header based on bottom_level_headers...")
+        #print("Bottom-level headers:", bottom_level_headers, "\n")
+
+        for key, value in normalized_chunk_ids_by_header.items():
+            if key in bottom_level_headers:
+                #print(f"✔ Match found: {repr(key)} is in bottom_level_headers. Adding to result.")
+                filtered_chunk_ids_by_header[key] = value
+            #else:
+                #print(f"✘ No match: {repr(key)} not in bottom_level_headers. Skipping.")
+
+        #print("\nFiltered result keys:", list(filtered_chunk_ids_by_header.keys()))
         return filtered_chunk_ids_by_header
+
+    # def get_chunk_ids_by_bottom_level_headers(chunk_ids_by_header, example_headers):
+    #     """
+    #     Get a list of chunk IDs that match the bottom-level sections of the original header tuples.
+    #     This approach handles multi-level headers by always selecting the last level.
+    #     """
+    #     print('\n', type(example_headers))
+    #     print("EXAMPLE_HEADERS:", example_headers, '\n\n')
+    #     print("Chunk_IDS_BY_HEADER:", chunk_ids_by_header, '\n\n')
+
+    #     # Initialize list for bottom-level headers
+    #     bottom_level_headers = []
+
+    #     # Safely extract bottom-level headers, handling empty tuples
+    #     for header in example_headers:
+    #         if len(header) > 0:
+    #             bottom_level_headers.append(header[-1])
+    #         else:
+    #             bottom_level_headers.append("ERROR_NO_HEADER_PLACEHOLDER")
+
+    #     # Diagnostic flag: check if the placeholder occurs multiple times
+    #     placeholder_count = bottom_level_headers.count("ERROR_NO_HEADER_PLACEHOLDER")
+    #     if placeholder_count > 1:
+    #         print(f"!!! MULTIPLE_PLACEHOLDER_OCCURRENCES: 'ERROR_NO_HEADER_PLACEHOLDER' occurred {placeholder_count} times in bottom_level_headers")
+        
+    #     # Normalize chunk_ids_by_header to replace empty/null keys with a placeholder
+    #     normalized_chunk_ids_by_header = {}
+    #     for key, value in chunk_ids_by_header.items():
+    #         normalized_key = key if (key is not None and key.strip() != '') else "ERROR_NO_HEADER_PLACEHOLDER"
+    #         normalized_chunk_ids_by_header[normalized_key] = value
+
+    #     # Filter the normalized dictionary keys based on the bottom-level headers
+    #     filtered_chunk_ids_by_header = {}
+    #     print("\nFiltering chunk_ids_by_header based on bottom_level_headers...")
+    #     print("Bottom-level headers:", bottom_level_headers, "\n")
+
+    #     print("Normalized Chunk_ids_by_header:")
+    #     for key, value in normalized_chunk_ids_by_header.items():
+    #         if key in bottom_level_headers:
+    #             print(f"✔ Match found: {repr(key)} is in bottom_level_headers. Adding to result.")
+    #             filtered_chunk_ids_by_header[key] = value
+    #         else:
+    #             print(f"✘ No match: {repr(key)} not in bottom_level_headers. Skipping.")
+
+    #     print("\nFiltered result keys:", list(filtered_chunk_ids_by_header.keys()))
+
+    #     # # Filter the dictionary keys based on the bottom-level headers
+    #     # filtered_chunk_ids_by_header = {}
+    #     # print("Filtering chunk_ids_by_header based on bottom_level_headers...")
+    #     # print("Bottom-level headers:", bottom_level_headers, "\n")
+
+    #     # print(f"Chunk_ids_by_header: {chunk_ids_by_header}\n")
+
+    #     # for key, value in chunk_ids_by_header.items():
+    #     #     if key in bottom_level_headers:
+    #     #         print(f"✔ Match found: '{key}' is in bottom_level_headers. Adding to result.")
+    #     #         filtered_chunk_ids_by_header[key] = value
+    #     #     else:
+    #     #         print(f"✘ No match: '{key}' not in bottom_level_headers. Skipping.")
+
+    #     # print("\nFiltered result keys:", list(filtered_chunk_ids_by_header.keys()))
+
+    #     # # Filter the dictionary keys based on the bottom-level headers
+    #     # filtered_chunk_ids_by_header = {}
+    #     # for key, value in chunk_ids_by_header.items():
+    #     #     if key in bottom_level_headers:
+    #     #         filtered_chunk_ids_by_header[key] = value
+
+    #     # Check for presence of a bottom level header
+    #     #if len(example_headers) >= 1:
+    #     #    try:
+    #     #        # Extract the bottom-level header from each original header tuple
+    #     #        bottom_level_headers = [header[-1] for header in example_headers]
+    #     #    except IndexError:
+    #     #        print(example_headers)
+    #     #else:
+    #     #    # if no header, assign "ERROR_NO_HEADER_PLACEHOLDER"
+    #     #    bottom_level_headers = ["ERROR_NO_HEADER_PLACEHOLDER" for _ in example_headers]
+        
+    #     # # Filter the dictionary keys based on the bottom-level headers
+    #     # filtered_chunk_ids_by_header = {
+    #     #     key: value
+    #     #     for key, value in chunk_ids_by_header.items()
+    #     #     if key in bottom_level_headers
+    #     # }
+
+    #     return filtered_chunk_ids_by_header
 
     def process_structure_dict_entries(input_structured_dict):
 
@@ -247,10 +466,12 @@ def topic_level_context_retrieval(current_query_context_chunks, QDRANT_CLIENT, C
 
             #print(f"\n\nChunk Id to Topic = {filtered_chunk_id_to_topic}")
             #print()
+            
 
             # Output the mapping
             for original_chunk_id, original_arxiv_id in zip(current_state_context_chunk_ids, current_state_context_arxiv_ids):
                 if structured_dict_arxiv_id == original_arxiv_id:
+                    #print(original_chunk_id)
                     chunk_topic = filtered_chunk_id_to_topic[original_chunk_id]
                     chunk_pool = filtered_chunk_ids_by_topic_header[chunk_topic]
 
@@ -280,9 +501,6 @@ def display_summary(current_user_query_state_history: dict):
         else:
             for i, (cid, score) in enumerate(zip(semantic_context_ids, semantic_context_scores)):
                 print(f"####     [{i+1}] ID: {cid}, Score: {score:.4f}")
-
-
-
 
         # Current state bm25 chunk info
         print('\n#### 🔹 Current State BM25 Context Chunks:')
@@ -335,3 +553,30 @@ def get_system_prompt():
     print(f"\n############### System Prompt:\n{my_system_prompt}")
 
     return my_system_prompt
+
+# Function to extract publish year and month from arxiv_id
+def get_publish_date(arxiv_id):
+    year_month_together = arxiv_id.split('.')[0]
+    year, month = year_month_together[:2], year_month_together[3:]
+
+    year = '20' + year
+    if len(month) < 2:
+        month = '0' + month
+
+    return f"{year}-{month}"
+
+def build_citation_string_final(chunk_info_display):
+    lines = []
+    for arxiv_id, title, chunk_id, header_hierarchy, token_count in chunk_info_display:
+        publish_date = get_publish_date(arxiv_id)
+        year = publish_date[:4] if publish_date else "Unknown"
+        section_path = " → ".join(v for _, v in header_hierarchy.items())
+        link = f"https://arxiv.org/abs/{arxiv_id}"
+
+        line = (
+            f"“{title}” ({year}) |  arXiv:{arxiv_id} | {link} | Section: {section_path} | "
+            f"Tokens: {token_count} | Chunk {chunk_id}"
+        )
+        lines.append(line)
+    return "\n".join(lines)
+

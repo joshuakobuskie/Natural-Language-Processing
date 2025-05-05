@@ -31,6 +31,7 @@ from rank_bm25 import BM25Okapi
 # These functions are used to deal with prompting the LLM / displaying LLM output
 from model_prompting_utils import standalone_prompt_model
 from model_prompting_utils import build_historical_query_response_thread
+from model_prompting_utils import topic_level_context_retrieval
 from qdrant_vector_store.data_embedding_utils import markdown_to_text # This function is used for printing the terminal output version of LLM's response for quicker testing
 from model_prompting_utils import get_system_prompt
 from model_prompting_utils import display_summary
@@ -621,8 +622,6 @@ def main():
             current_context_prompt_body = ''
 
         if RAG_SWITCH and TOPIC_RETRIEVAL_SWITCH:
-            from model_prompting_utils import topic_level_context_retrieval
-
             chunk_to_topic_chunks_mapper, chunk_to_topic_info_mapper = topic_level_context_retrieval(current_query_context_chunks=current_query_context_chunks,
                                             QDRANT_CLIENT=QDRANT_CLIENT,
                                             CHUNK_COLLECTION=CHUNK_COLLECTION)

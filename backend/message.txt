@@ -1,0 +1,123 @@
+---------------------------------------------------------------------------
+IndexError                                Traceback (most recent call last)
+Cell In[21], line 2
+      1 # Zero Shot
+----> 2 conduct_experiment(my_input_questions=my_input_questions_HW5,
+      3                    experiment=zero_shot_experiments_at_3_top_k,
+      4                    experiment_type='zero_shot_HW5_at_3_top_k'
+      5 )
+      6 conduct_experiment(my_input_questions=my_input_questions_HW5,
+      7                    experiment=zero_shot_experiments_at_5_top_k,
+      8                    experiment_type='zero_shot_HW5_at_5_top_k'
+      9 )
+     11 # Multi Shot @ 
+
+Cell In[20], line 8, in conduct_experiment(my_input_questions, experiment, experiment_type)
+      5 print(f"Running {experiment_name} with configuration: {experiment_config}")
+      7 # Here you can customize the configuration further if needed (e.g., dynamic changes)
+----> 8 process_list_of_queries_for_testing(
+      9     saved_chats_topic_name=experiment_name, 
+     10     list_of_questions=my_input_questions,
+     11     task_folder='experiments',
+     12     user_output_folder=experiment_type,
+     13     DESIRED_HISTORY_WINDOW_SIZE=experiment_config['DESIRED_HISTORY_WINDOW_SIZE'],
+     14     DESIRED_CONTEXT_CHUNKS_TOP_K=experiment_config['DESIRED_CONTEXT_CHUNKS_TOP_K'],
+     15     RAG_SWITCH=experiment_config['RAG_SWITCH'],
+     16     HISTORY_SWITCH=experiment_config['HISTORY_SWITCH'],
+     17     BM25_SWITCH=experiment_config['BM25_SWITCH'],
+     18     TOPIC_RETRIEVAL_SWITCH=experiment_config['TOPIC_RETRIEVAL_SWITCH'],
+     19     HISTORIC_QUERY_SIMILARITY_THRESHOLD=experiment_config['HISTORIC_QUERY_SIMILARITY_THRESHOLD']
+     20 )
+
+Cell In[8], line 41, in process_list_of_queries_for_testing(saved_chats_topic_name, list_of_questions, task_folder, user_output_folder, DESIRED_HISTORY_WINDOW_SIZE, DESIRED_CONTEXT_CHUNKS_TOP_K, RAG_SWITCH, HISTORY_SWITCH, BM25_SWITCH, TOPIC_RETRIEVAL_SWITCH, HISTORIC_QUERY_SIMILARITY_THRESHOLD)
+     38 print(f"BM25 Switch: {BM25_SWITCH}")
+     39 print(f"Topic Retrieval Switch: {TOPIC_RETRIEVAL_SWITCH}\n")
+---> 41 user_state = call_back_end_response_generation(
+     42                                   user_state,
+     43                                   DESIRED_HISTORY_WINDOW_SIZE,
+     44                                   DESIRED_CONTEXT_CHUNKS_TOP_K,
+     45                                   RAG_SWITCH,
+     46                                   HISTORY_SWITCH,
+     47                                   BM25_SWITCH,
+     48                                   TOPIC_RETRIEVAL_SWITCH,
+     49                                   HISTORIC_QUERY_SIMILARITY_THRESHOLD,
+     50                                   QUERY_TEXT=question,
+     51                                   final_json_path=final_json_path,
+     52                                   QUERY_NUM=query_num
+     53 )
+     55 save_chat_json(user_state[query_num], file_path=final_json_path)
+     57 print(f"Response: {user_state[query_num]['response_text']}\n")
+
+Cell In[3], line 16, in call_back_end_response_generation(user_query_state_history, DESIRED_HISTORY_WINDOW_SIZE, DESIRED_CONTEXT_CHUNKS_TOP_K, RAG_SWITCH, HISTORY_SWITCH, BM25_SWITCH, TOPIC_RETRIEVAL_SWITCH, HISTORIC_QUERY_SIMILARITY_THRESHOLD, QUERY_TEXT, QUERY_NUM, final_json_path)
+      1 def call_back_end_response_generation(
+      2                                       user_query_state_history: dict,
+      3                                       DESIRED_HISTORY_WINDOW_SIZE: int,
+   (...)     14 
+     15     # Call the `process_query()` function with the inputs
+---> 16     user_query_state_history[QUERY_NUM] = process_query(
+     17         DESIRED_HISTORY_WINDOW_SIZE, 
+     18         DESIRED_CONTEXT_CHUNKS_TOP_K, 
+     19         RAG_SWITCH, 
+     20         HISTORY_SWITCH, 
+     21         BM25_SWITCH, 
+     22         TOPIC_RETRIEVAL_SWITCH, 
+     23         HISTORIC_QUERY_SIMILARITY_THRESHOLD, 
+     24         QUERY_TEXT, 
+     25         user_query_state_history,
+     26         QUERY_NUM, 
+     27         QDRANT_CLIENT, 
+     28         CHUNK_COLLECTION,
+     29         HISTORY_COLLECTION,
+     30         LLM_MODEL,
+     31         LLM_SYSTEM_PROMPT,
+     32         DEVICE,
+     33         EMBEDDING_MODEL, 
+     34         TOKENIZER,
+     35         BM25_SEARCH_FUNCTION
+     36     )
+     38     return user_query_state_history
+
+File ~/Masters/Spring 2025/Natural Language Processing/Project/RagPythonLocal/final_response_front_end_main.py:602, in process_query(DESIRED_HISTORY_WINDOW_SIZE, DESIRED_CONTEXT_CHUNKS_TOP_K, RAG_SWITCH, HISTORY_SWITCH, BM25_SWITCH, TOPIC_RETRIEVAL_SWITCH, HISTORIC_QUERY_SIMILARITY_THRESHOLD, QUERY_TEXT, user_query_state_history, query_num, QDRANT_CLIENT, CHUNK_COLLECTION, HISTORY_COLLECTION, LLM_MODEL, LLM_SYSTEM_PROMPT, DEVICE, EMBEDDING_MODEL, TOKENIZER, BM25_SEARCH_FUNCTION)
+    598     current_context_prompt_body = ''
+    600 if RAG_SWITCH and TOPIC_RETRIEVAL_SWITCH:
+--> 602     chunk_to_topic_chunks_mapper, chunk_to_topic_info_mapper = topic_level_context_retrieval(current_query_context_chunks=current_query_context_chunks,
+    603                                     QDRANT_CLIENT=QDRANT_CLIENT,
+    604                                     CHUNK_COLLECTION=CHUNK_COLLECTION,
+    605                                     verbose=False
+    606     )
+    608     # Initialize an empty dictionary to store the deduplicated values
+    609     deduplicated_chunk_to_topic_chunks_mapper = {}
+
+File ~/Masters/Spring 2025/Natural Language Processing/Project/RagPythonLocal/model_prompting_utils.py:265, in topic_level_context_retrieval(current_query_context_chunks, QDRANT_CLIENT, CHUNK_COLLECTION, verbose)
+    261                 arxiv_id_mapper[original_chunk_id] = {'arxiv_id': original_arxiv_id, 'topic': chunk_topic}
+    263     return original_chunk_id_to_id_pool_mapper, arxiv_id_mapper
+--> 265 single_chunk_to_topic_chunks_pool_mapper, arxiv_id_mapper = process_structure_dict_entries(input_structured_dict=structured_topic_dict)
+    267 return single_chunk_to_topic_chunks_pool_mapper, arxiv_id_mapper
+
+File ~/Masters/Spring 2025/Natural Language Processing/Project/RagPythonLocal/model_prompting_utils.py:235, in topic_level_context_retrieval.<locals>.process_structure_dict_entries(input_structured_dict)
+    228 chunk_ids_by_header = get_chunk_ids_by_arxiv(qdrant_client=QDRANT_CLIENT, 
+    229                             collection_name=CHUNK_COLLECTION, 
+    230                             arxiv_id=structured_dict_arxiv_id, # this is a filter
+    231                             headers=example_headers
+    232                             )
+    234 # Retrieve the chunk IDs that match the bottom-level headers
+--> 235 filtered_chunk_ids_by_topic_header = get_chunk_ids_by_bottom_level_headers(chunk_ids_by_header, example_headers)
+    237 #print(f"\n\nFinal Topic Chunk Ids by Header = {filtered_chunk_ids_by_topic_header}")
+    238 #print()  
+    239 
+    240 
+    241 # Relate chunk ids to their respective topic header
+    242 filtered_chunk_id_to_topic = {}
+
+File ~/Masters/Spring 2025/Natural Language Processing/Project/RagPythonLocal/model_prompting_utils.py:211, in topic_level_context_retrieval.<locals>.get_chunk_ids_by_bottom_level_headers(chunk_ids_by_header, example_headers)
+    208 matched_chunk_ids = {}
+    210 # Extract the bottom-level header from each original header tuple
+--> 211 bottom_level_headers = [header[-1] for header in example_headers]
+    213 # Filter the dictionary keys based on the bottom-level headers
+    214 filtered_chunk_ids_by_header = {
+    215     key: value
+    216     for key, value in chunk_ids_by_header.items()
+    217     if key in bottom_level_headers
+    218 }
+
+IndexError: tuple index out of range

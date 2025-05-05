@@ -181,6 +181,12 @@ def build_query_state_payload(query_state: dict) -> dict: # this function looks 
         "total_token_count": query_state.get("total_token_count"),
         "system_prompt_used": query_state.get("system_prompt_used"), # the initial system prompt used to generate the current response
         "dynamic_prompt_body": query_state.get("dynamic_prompt_body"), # the dynamic body prompt generated through the `build_historical_query_response_thread` function
+        "arxiv_paper_citation_string": query_state.get("arxiv_paper_citation_string"),
+
+        # New: Generation diagnostics
+        "generation_attempts": query_state.get("generation_attempts"),
+        "generation_finish_reason": query_state.get("generation_finish_reason"),
+        "error_flag": query_state.get("error_flag"),
 
         # Flags
         "rag_used": query_state.get("rag_used"),
